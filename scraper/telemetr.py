@@ -9,7 +9,7 @@ import datetime as dt
 
 
 @dataclass
-class ChannelParsData:
+class ScrapChannel:
     id: int
     title: str
     link_avatar: str
@@ -38,7 +38,7 @@ def get_channels_by_category_page(
         session: requests.Session,
         category_url: str,
         category_page: int,
-        max_participants=1_000_000) -> List[ChannelParsData]:
+        max_participants=1_000_000) -> List[ScrapChannel]:
 
     channels = []
     params = dict(
@@ -46,6 +46,8 @@ def get_channels_by_category_page(
         participants_to=max_participants,
         lang_code='any',
     )
+
+    # temporarily
     if not os.path.exists('test.html'):
         response = session.get(category_url, params=params)
         soup = BeautifulSoup(response.text, 'html.parser')
@@ -56,9 +58,9 @@ def get_channels_by_category_page(
     channels_tbody = channels_table.find('tbody')
     channels_tbody_tr = channels_tbody.find_all('tr')
 
-    channel_trs = [[channels_tbody_tr[num],channels_tbody_tr[num+1]] for num, tr in enumerate(channels_tbody_tr) if not num % 2]
+    channel_trs = [[channels_tbody_tr[num], channels_tbody_tr[num+1]] for num, tr in enumerate(channels_tbody_tr) if not num % 2]
 
-    for num, data in enumerate(channel_trs):
+    for data in channel_trs:
         tr_main_data, tr_categories = data
 
         photo_td = tr_main_data.find('td', 'text-center wd-100 pb-0')
@@ -84,22 +86,28 @@ def get_channels_by_category_page(
         td_all = tr_main_data.find_all('td', class_='text-nowrap pb-0')
 
         participants_str = td_all[0].get_text(strip=True)
-        participants = int(participants_str.replace('\'','')) if participants_str else None
+        participants = int(participants_str.replace('\'','')) if participants_str else 1
 
         views_block = td_all[2]
 
         views_data = []
         views_spans = views_block.find_all('span')
         for span in views_spans:
-            span_value = int(span.text.replace('\'', '')) if span else None
-            views_data.append(span_value)
+            views_data.append(int(span.text.replace('\'', '')) if span else 0)
         views, views24 = views_data
 
         categories_a = (tr_categories.find('td').find('div', class_='web-hide pb-2')
                         .find_all('a', class_='btn btn-label-facebook btn-sm pl-2 pr-2 pt-1 pb-1 kt-font-12'))
         categories = [c.text.split(' ')[0] for c in categories_a]
 
-        channel = ChannelParsData(
+        try:
+            er = round((views / participants) * 100, 1)
+            er24 = round((views24 / participants) * 100, 1)
+        except ZeroDivisionError:
+            er = 0
+            er24 = 0
+
+        channel = ScrapChannel(
             id=channel_id,
             title=title,
             link_avatar=photo,
@@ -109,8 +117,8 @@ def get_channels_by_category_page(
             participants=participants,
             views=views,
             views24=views24,
-            er=round((views/participants) * 100, 1),
-            er24=round((views24/participants) * 100, 2),
+            er=er,
+            er24=er24,
             categories=categories,
         )
         channels.append(channel)
