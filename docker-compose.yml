@@ -1,0 +1,18 @@
+version: '3'
+services:
+  redis:
+    image: 'redis:latest'
+    command: redis-server --appendonly yes
+    ports:
+      - '6379:6379'
+    volumes:
+      - C:/Users/Artem/programming/Django/telemetr3/RadisCache:/data
+
+  redis-commander:
+    image: 'rediscommander/redis-commander:latest'
+    ports:
+      - '8081:8081'
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    depends_on:
+      - redis
