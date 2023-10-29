@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from bs4 import BeautifulSoup
 import datetime as dt
 
-from RadisCache.cache import cache_decorator
+from RedisCache.cache import cache_decorator
 
 
 @dataclass
