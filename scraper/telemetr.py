@@ -1,3 +1,4 @@
+import re
 import os.path
 from typing import List
 
@@ -18,9 +19,9 @@ class ScrapChannel:
     description: str
     participants: int
     views: int
-    views24: int
+    views24: int | None
     er: int
-    er24: int
+    er24: int | None
     categories: List[str] | None = None
     descriptions: list | None = None
     buyers: list | None = None
@@ -32,6 +33,10 @@ class ScrapChannel:
 
     def __repr__(self):
         return self.__str__()
+
+
+def clear_text(text):
+    return re.sub(r'[\n\t\']', '', text).strip()
 
 
 def get_channels_by_category_page(
@@ -124,3 +129,88 @@ def get_channels_by_category_page(
         channels.append(channel)
 
     return channels
+
+
+def get_channel_by_page(
+        session: requests.Session,
+        link_telemetr: str) -> ScrapChannel:
+
+    response = session.get(link_telemetr)
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    tab_panel = soup.find('div',class_='tab-pane active')
+    rows = tab_panel.find_all('div', class_='col-lg-4 col-md-4')
+    left_row, middle_row, right_row = rows
+
+    #left_row
+    div_avatar = left_row.find('div', class_='kt-widget__media text-center kt-hidden- analytics-main-c-avatar-wrap')
+    img_avatar = div_avatar.find('img')
+    link_avatar = img_avatar.attrs.get('src')
+
+    div_content = left_row.find('div', class_='kt-widget__content')
+    div_title = div_content.find('div', class_='kt-widget__head')
+    a_title = div_title.find('a', class_='kt-widget__username')
+    title = a_title.get_text(strip=True)
+    link_tg = a_title.attrs.get('href')
+
+    div_info = div_content.find('div', class_='kt-widget__info')
+    div_description = div_info.find('div', class_='kt-widget__desc t_long')
+    description = '\n'.join([part.get_text(strip=True) for part in div_description.contents if str(part) != '<br/>'])
+
+    c_id = left_row.find('select').attrs.get('data-id')
+    option_categories = left_row.select('option[selected]')
+    categories = [category.attrs.get('value') for category in option_categories]
+
+    #middle_row
+    div_participants_data = middle_row.find('div', class_='row text-center')
+    div_participants, *_ = div_participants_data.find_all('div', class_='col-md-3')
+    participants = int(clear_text(div_participants.find('span', attrs={'data-num': 'participants'}).get_text(strip=True)))
+
+    views = int(clear_text(middle_row.find('span', attrs={'data-num': 'views_per_post'}).get_text(strip=True)))
+
+    try:
+        er = round((views / participants) * 100, 1)
+    except ZeroDivisionError:
+        er = 0
+
+    channel = ScrapChannel(
+        id=c_id,
+        title=title,
+        link_avatar=link_avatar,
+        link_tg=link_tg,
+        link_telemetr=link_telemetr,
+        description=description,
+        participants=participants,
+        views=views,
+        views24=None,
+        er=er,
+        er24=None,
+        categories=categories,
+    )
+
+    return channel
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
