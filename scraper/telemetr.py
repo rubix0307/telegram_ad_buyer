@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from bs4 import BeautifulSoup
 import datetime as dt
 
+from RadisCache.cache import cache_decorator
+
 
 @dataclass
 class ScrapChannel:
@@ -39,25 +41,23 @@ def clear_text(text):
     return re.sub(r'[\n\t\']', '', text).strip()
 
 
+@cache_decorator(ignore_keys=['session'])
 def get_channels_by_category_page(
+        *,
         session: requests.Session,
         category_url: str,
-        category_page: int,
+        page: int,
         max_participants=1_000_000) -> List[ScrapChannel]:
 
     channels = []
     params = dict(
-        page=category_page,
+        page=page,
         participants_to=max_participants,
         lang_code='any',
     )
 
-    # temporarily
-    if not os.path.exists('test.html'):
-        response = session.get(category_url, params=params)
-        soup = BeautifulSoup(response.text, 'html.parser')
-    else:
-        soup = BeautifulSoup(open('test.html', 'r', encoding='utf-8'), 'html.parser')
+    response = session.get(category_url, params=params)
+    soup = BeautifulSoup(response.text, 'html.parser')
 
     channels_table = soup.find('table', id='channels_table')
     channels_tbody = channels_table.find('tbody')
@@ -83,10 +83,14 @@ def get_channels_by_category_page(
 
         link_tg = channel_data.select_one('a.btn.btn-sm.btn-xs.a_icon_black').get('data-link')
         description_block = channel_data.select_one('div.text-nowrap.pt-3')
-        description = (description_block
-                       .select_one('span.btn.btn-outline-warning.btn-sm.btn-xs.kt-font-dark')
-                       .get('data-cont')
-                       .replace('<br>', '\n')) if description_block else ''
+
+        try:
+            description = (description_block
+                           .select_one('span.btn.btn-outline-warning.btn-sm.btn-xs.kt-font-dark')
+                           .get('data-cont')
+                           .replace('<br>', '\n')) if description_block else ''
+        except AttributeError:
+            description = None
 
         td_all = tr_main_data.find_all('td', class_='text-nowrap pb-0')
 
@@ -99,6 +103,9 @@ def get_channels_by_category_page(
         views_spans = views_block.find_all('span')
         for span in views_spans:
             views_data.append(int(span.text.replace('\'', '')) if span else 0)
+        if not views_data or len(views_data) != 2:
+            views_data = [0, 0]
+
         views, views24 = views_data
 
         categories_a = (tr_categories.find('td').find('div', class_='web-hide pb-2')
@@ -131,7 +138,9 @@ def get_channels_by_category_page(
     return channels
 
 
+@cache_decorator(ignore_keys=['session'])
 def get_channel_by_page(
+        *,
         session: requests.Session,
         link_telemetr: str) -> ScrapChannel:
 
