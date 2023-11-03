@@ -200,7 +200,23 @@ def get_channel_by_page(
     return channel
 
 
+@redis_cache(ignore_keys=['session'])
+def get_all_categories(*, session: requests.Session) -> List[ScrapCategories]:
 
+    response = session.get('https://telemetr.me/channels')
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    cats_long = soup.find('div', class_='row cats_long')
+    cats_span = cats_long.find_all('span', class_='btn-group btn-group cat-group')
+
+    categories = []
+    for span in cats_span:
+        a = span.find('a')
+        categories.append(ScrapCategories(
+            title=a.get_text(strip=True),
+            link_telemetr='https://telemetr.me' + a.attrs.get('href').split('?')[0]
+        ))
+    return categories
 
 
 
