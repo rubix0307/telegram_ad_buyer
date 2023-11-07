@@ -33,7 +33,9 @@ def redis_cache(ignore_keys=None, ex=None, hash_use=False):
             bound_args = sig.bind_partial(**kwargs)
             bound_args.apply_defaults()
 
-            key = f'''{func.__name__}__{'__'.join([f'{k}={get_hash(str(v)) if hash_use else v}' for k, v in sorted(bound_args.arguments.items()) if k not in ignore_keys])}'''
+            key = f'''{func.__name__}__{'__'.join([f'{k}={get_hash(str(v)) if hash_use else v}' 
+                      for k, v in sorted(bound_args.arguments.items())
+                      if k not in ignore_keys])}'''
 
             if (res := r.get(key)) is None:
                 res = func(**kwargs)
@@ -50,9 +52,12 @@ def redis_cache(ignore_keys=None, ex=None, hash_use=False):
 
             duration = str(round(time.time() - start_time, 3)).ljust(7, '0')
             duration = f'{color if float(duration) < 3 else Fore.RED}{duration}s{Fore.RESET}'
-            print(
-                f'''{color}[{log_title}] {f'len={str(len(res)).rjust(3, str(0))}' if type(res) == list else ''} duration={duration} res={Fore.GREEN if bool(res) else ''}{bool(res)}{Fore.RESET} {log_key}''')
 
+            try:
+                print(
+                    f'''{color}[{log_title}] {f'len={str(len(res)).rjust(3, str(0))}' if type(res) == list else ''} duration={duration} res={Fore.GREEN if bool(res) else ''}{bool(res)}{Fore.RESET} {log_key}''')
+            except UnicodeEncodeError:
+                pass
             return res
         return wrapper
     return decorator
