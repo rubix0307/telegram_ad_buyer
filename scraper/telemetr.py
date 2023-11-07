@@ -78,7 +78,11 @@ def get_channels_by_category_page(
         channels_tbody = channels_table.find('tbody')
         channels_tbody_tr = channels_tbody.find_all('tr')
 
-        channel_trs = [[channels_tbody_tr[num], channels_tbody_tr[num+1]] for num, tr in enumerate(channels_tbody_tr) if not num % 2]
+        channel_trs = [
+                        [channels_tbody_tr[num], channels_tbody_tr[num+1]]
+                        for num, tr in enumerate(channels_tbody_tr)
+                        if not num % 2
+                       ]
 
         for data in channel_trs:
             tr_main_data, tr_categories = data
@@ -110,7 +114,7 @@ def get_channels_by_category_page(
             td_all = tr_main_data.find_all('td', class_='text-nowrap pb-0')
 
             participants_str = td_all[0].get_text(strip=True)
-            participants = int(participants_str.replace('\'','')) if participants_str else 1
+            participants = int(participants_str.replace('\'', '')) if participants_str else 1
 
             views_block = td_all[2]
 
@@ -162,11 +166,11 @@ def get_channel_by_page(
     response = session.get(link_telemetr)
     soup = BeautifulSoup(response.text, 'html.parser')
 
-    tab_panel = soup.find('div',class_='tab-pane active')
+    tab_panel = soup.find('div', class_='tab-pane active')
     rows = tab_panel.find_all('div', class_='col-lg-4 col-md-4')
     left_row, middle_row, right_row = rows
 
-    #left_row
+    # left_row
     div_avatar = left_row.find('div', class_='kt-widget__media text-center kt-hidden- analytics-main-c-avatar-wrap')
     img_avatar = div_avatar.find('img')
     link_avatar = img_avatar.attrs.get('src')
@@ -185,10 +189,10 @@ def get_channel_by_page(
     option_categories = left_row.select('option[selected]')
     categories = [category.attrs.get('value') for category in option_categories]
 
-    #middle_row
-    div_participants_data = middle_row.find('div', class_='row text-center')
-    div_participants, *_ = div_participants_data.find_all('div', class_='col-md-3')
-    participants = int(clear_text(div_participants.find('span', attrs={'data-num': 'participants'}).get_text(strip=True)))
+    # middle_row
+    div_partis_data = middle_row.find('div', class_='row text-center')
+    div_partis, *_ = div_partis_data.find_all('div', class_='col-md-3')
+    participants = int(clear_text(div_partis.find('span', attrs={'data-num': 'participants'}).get_text(strip=True)))
 
     views = int(clear_text(middle_row.find('span', attrs={'data-num': 'views_per_post'}).get_text(strip=True)))
 
