@@ -1,0 +1,36 @@
+<div class="channel-card">
+
+
+    <div class="avatar">
+        <img loading="lazy" src="{{ channel.link_avatar }}" alt="avatar {{ channel.title }}">
+    </div>
+
+    <div class="main-data">
+        <div class="title-data">
+            <div class="title">{{ channel.title }}</div>
+            <div class="social">
+                <a target="_blank" href="{{ channel.link_tg }}" class="tg"><img src="https://telegram.org/img/favicon.ico" alt=""></a>
+                <a target="_blank" href="{{ channel.link_telemetr }}" class="tm"><img src="https://telemetr.me/favicons/android-icon-192x192.png" alt=""></a>
+            </div>
+        </div>
+
+        <div class="info">
+            <div class="participants name-value">
+                <div class="name">Подписчиков:</div>
+                <div class="value">{{ channel.participants|default_if_none:'?' }}</div>
+
+            </div>
+            <div class="views">
+                <div class="views-main name-value">
+                    <div class="name">Просмотры:</div>
+                    <div class="value">{{ channel.views|default_if_none:'?' }}</div></div>
+                <div class="views-24 name-value">
+                    <div class="name">Просмотры за 24ч:</div>
+                    <div class="value">{{ channel.views24|default_if_none:'?' }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</div>

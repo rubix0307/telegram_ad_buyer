@@ -1,0 +1,52 @@
+<style>
+.categories {
+  display: flex;
+  flex-wrap: wrap;
+  overflow: hidden;
+  max-height: 22px;
+}
+
+.category-item {
+    list-style-type: none;
+    margin-right: 10px;
+    height: 20px;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+}
+
+#showMore {
+  display: none;
+}
+
+#showMore:checked ~ .categories {
+  max-height: none;
+}
+
+#showMore:checked ~ #showLabel {
+  display: none;
+}
+
+#showMore:checked ~ #hideLabel {
+  display: inline;
+}
+
+#hideLabel {
+  display: none;
+}
+</style>
+
+<input type="checkbox" id="showMore">
+
+<ul class="categories">
+    {% for category in categories %}
+        <li class="category-item"><a href="{% url 'find_managers' category=category.title %}">{{ category.title }}</a></li>
+    {% endfor %}
+</ul>
+<div class="categories-btn">
+    <label id="showLabel" for="showMore">Скрыть / показать</label>
+</div>
+
+
+
+

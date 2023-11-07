@@ -1,0 +1,13 @@
+<div class="channels">
+    <form hx-post="{% url 'get_channels' %}" hx-swap="innerHTML" hx-target="#channel-list" class="search-channel" method="post">
+        {% csrf_token %}
+        <input type="text" placeholder="Название канала" name="channel_name">
+        <button class='search'>Искать</button>
+    </form>
+
+    <div id="channel-list">
+        {% for channel in channels %}
+            {% include 'channel/inc/channel_card.html' %}
+        {% endfor %}
+    </div>
+</div>

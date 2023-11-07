@@ -1,0 +1,7 @@
+{% if channels %}
+	{% for channel in channels %}
+        {% include 'channel/inc/channel_card.html' %}
+    {% endfor %}
+{% else %}
+    <div>По вашему запросу ничего не найдено</div>
+{% endif %}

@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block main %}
+    {% include 'channel/inc/categories.html' %}
+    <h1>{{ category }}</h1>
+    <form action="" class="find-manager" method="post">
+        {% csrf_token %}
+        <div class="caption">Подписчиков</div>
+        <div class="form-row">
+            <label for="{{ form.participants__gte.id_for_label }}">От</label>
+            {{ form.participants__gte }}
+
+            <label for="{{ form.participants__lte.id_for_label }}">До</label>
+            {{ form.participants__lte }}
+        </div>
+
+        <div class="caption">Просмотров</div>
+        <div class="form-row">
+            <label for="{{ form.views__gte.id_for_label }}">От</label>
+            {{ form.views__gte }}
+
+            <label for="{{ form.views__lte.id_for_label }}">До</label>
+            {{ form.views__lte }}
+        </div>
+
+        <div class="caption">Вовлеченность</div>
+        <div class="form-row">
+            <label for="{{ form.er__gte.id_for_label }}">От</label>
+            {{ form.er__gte }}
+
+            <label for="{{ form.er__lte.id_for_label }}">До</label>
+            {{ form.er__lte }}
+        </div>
+
+        <div class="caption">Язык канала</div>
+        <div class="form-row">
+            <label for="{{ form.lang_code.id_for_label }}"><img src="https://ssl.gstatic.com/translate/favicon.ico" alt="" class="lang"></label>
+            {{ form.lang_code }}
+        </div>
+
+        <button type="submit">Искать</button>
+    </form>
+
+    <h2>найдено: {{ channels }}</h2>
+{% endblock %}
