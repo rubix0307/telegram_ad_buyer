@@ -1,10 +1,11 @@
 # temporary files
 main.py
-xx_rubix_xx1.pkl
 
-# Radis
+
+# Redis
 dump.rdb
 appendonlydir
+sessions/cookies/*.pkl
 
 # Django #
 *.log
