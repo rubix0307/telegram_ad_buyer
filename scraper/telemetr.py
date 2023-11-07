@@ -1,5 +1,5 @@
+import json
 import re
-import os.path
 from typing import List
 
 import requests
@@ -9,6 +9,24 @@ from bs4 import BeautifulSoup
 import datetime as dt
 
 from RedisCache.cache import redis_cache
+
+
+@dataclass
+class AdvertisingChannel:
+    id: int
+    seller_id: int
+    title: str
+    link_avatar: str
+    link_tg: str
+    link_telemetr: str
+    participants: int
+    date: dt.datetime
+
+    def __str__(self):
+        return f'<{self.__name__}>: {self.title}'
+
+    def __repr__(self):
+        return self.__str__()
 
 
 @dataclass
@@ -238,23 +256,68 @@ def get_all_categories(*, session: requests.Session) -> List[ScrapCategories]:
     return categories
 
 
+@redis_cache(ignore_keys=['session'], ex=None)
+def get_advertising_by_channel(*, session, channel, start=0, length=216):
 
+    data = {
+        'draw': '1',
+        'columns[0][data]': '0',
+        'columns[0][name]': '',
+        'columns[0][searchable]': 'true',
+        'columns[0][orderable]': 'false',
+        'columns[0][search][value]': '',
+        'columns[0][search][regex]': 'false',
+        'columns[1][data]': '1',
+        'columns[1][name]': '',
+        'columns[1][searchable]': 'true',
+        'columns[1][orderable]': 'false',
+        'columns[1][search][value]': '',
+        'columns[1][search][regex]': 'false',
+        'columns[2][data]': 2,
+        'columns[2][name]': '',
+        'columns[2][searchable]': 'true',
+        'columns[2][orderable]': 'false',
+        'columns[2][search][value]': '',
+        'columns[2][search][regex]': 'false',
+        'start': start,
+        'length': length,
+        'search[value]': '',
+        'search[regex]': 'false',
+        'channel_id': channel.id,
+        'whom': 1
+    }
+    response = session.post('https://telemetr.me/tt.php', data=data)
 
+    json_data = json.loads(response.text).get('data')
+    media_list = ''
+    for data in json_data:
+        media_list += '<div class="j_data_item">' + ''.join(data) + '</div>'
 
+    soup = BeautifulSoup(media_list, 'html.parser')
+    div_elements = soup.find_all('div', class_='j_data_item')
 
+    channels_data = []
+    for element in div_elements:
+        media_body = element.find('div', class_='media-body')
+        if not media_body:
+            break
+        media_body_h4 = media_body.find('h4')
+        date_div = element.find_all('div')[-1]
+        check_date = date_div.find('a').get('data-date')
 
+        title = media_body_h4.find('a').text
+        if not title:
+            continue
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        channel_data = AdvertisingChannel(
+            id=int(media_body_h4.find('button').get('data-cid')),
+            seller_id=channel.id,
+            title=media_body_h4.find('a').text,
+            link_avatar=element.find('a').find('img').get('src'),
+            link_tg=media_body_h4.find('a').get('data-info'),
+            link_telemetr=f'''https://telemetr.me{media_body_h4.find('a').get('href')}''',
+            participants=int(re.sub(r'[\n\t\']', '', media_body.find('span').text)),
+            date=dt.datetime.strptime(check_date, '%Y-%m-%d %H:%M:%S')
+        )
+        channels_data.append(channel_data)
+    return channels_data
