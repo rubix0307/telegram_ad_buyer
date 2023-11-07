@@ -1,8 +1,3 @@
-import re
-import os.path
-from typing import List
-
-import requests
 from dataclasses import dataclass
 
 from bs4 import BeautifulSoup
@@ -25,6 +20,7 @@ class ScrapPreviewChannel:
 
     def __repr__(self):
         return self.__str__()
+
 
 @dataclass
 class ScrapPreviewUser:
@@ -69,16 +65,8 @@ def get_scrap_card_by_link(*, session, link):
     tgme_page_extra = tgme_page.find('div', class_='tgme_page_extra')
     extra = tgme_page_extra.get_text(strip=True)
 
-    if not 'subscribe' in extra:
-        answer = ScrapPreviewUser(
-            name=title,
-            username=extra,
-            description=description,
-            link_avatar=link_avatar,
-            link_tg=link,
-            )
-    else:
-        participants = int((extra.replace('no','').split('subscribe')[0].replace(' ','')) or 0)
+    if 'subscribe' in extra:
+        participants = int((extra.replace('no', '').split('subscribe')[0].replace(' ', '')) or 0)
         answer = ScrapPreviewChannel(
             title=title,
             participants=participants,
@@ -86,6 +74,13 @@ def get_scrap_card_by_link(*, session, link):
             link_avatar=link_avatar,
             link_tg=link,
         )
+    else:
+        answer = ScrapPreviewUser(
+            name=title,
+            username=extra,
+            description=description,
+            link_avatar=link_avatar,
+            link_tg=link,
+        )
+
     return answer
-
-
