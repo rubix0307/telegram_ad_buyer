@@ -35,7 +35,7 @@ class Manager(models.Model):
 
 class Advertisement(models.Model):
     id = models.AutoField(primary_key=True)
-    seller = models.ForeignKey('Channel', on_delete=models.CASCADE, related_name='seller')
+    seller = models.ForeignKey('Channel', on_delete=models.CASCADE, related_name='ad_seller')
     buyer = models.ForeignKey('Channel', on_delete=models.CASCADE, related_name='buyer')
     date = models.DateTimeField()
 
@@ -65,6 +65,7 @@ class Channel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     categories = models.ManyToManyField(Category)
     managers = models.ManyToManyField(Manager)
+    advertisements = models.ForeignKey('Advertisement', on_delete=models.CASCADE, related_name='ad_seller', null=True)
 
     def __str__(self):
         return f'<{self.__class__.__name__}>: {self.title}'
