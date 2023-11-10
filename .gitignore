@@ -1,6 +1,5 @@
 # temporary files
-main.py
-
+test_main.py
 
 # Redis
 dump.rdb
