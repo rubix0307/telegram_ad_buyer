@@ -256,7 +256,7 @@ def get_all_categories(*, session: requests.Session) -> List[ScrapCategories]:
     return categories
 
 
-@redis_cache(ignore_keys=['session'], ex=None)
+@redis_cache(ignore_keys=['session'], ex=60*60*12)
 def get_advertising_by_channel(*, session, channel, start=0, length=216):
 
     data = {
