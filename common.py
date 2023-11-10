@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 from RedisCache.cache import redis_cache
 
 
-@redis_cache(hash_use=True)
+@redis_cache(hash_use=True, ex=60*60*24*7)
 def get_user_links_by_text(*, text):
     if text:
         soup = BeautifulSoup(text, 'html.parser')
