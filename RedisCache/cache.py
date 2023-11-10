@@ -19,31 +19,43 @@ def get_hash(text):
     return hash_hex
 
 
+def get_cache_key(func, ignore_keys: list = [], hash_use=False, **kwargs):
+    sig = inspect.signature(func)
+    bound_args = sig.bind_partial()
+    bound_args.apply_defaults()
+
+    all_args = {}
+    all_args.update(**kwargs)
+    all_args.update(bound_args.arguments.items())
+
+    key = f'''{func.__name__}__{'__'.join([f'{k}={get_hash(str(v)) if hash_use else v}'
+                                           for k, v in sorted(all_args.items())
+                                           if k not in ignore_keys])}'''
+    return key
+
+def get_cache(cache_key):
+    return r.get(cache_key)
+
 def redis_cache(ignore_keys=None, ex=None, hash_use=False):
     if ignore_keys is None:
         ignore_keys = []
 
     def decorator(func):
-        sig = inspect.signature(func)
-
 
         @functools.wraps(func)
         def wrapper(**kwargs):
             start_time = time.time()
-            bound_args = sig.bind_partial(**kwargs)
-            bound_args.apply_defaults()
 
-            key = f'''{func.__name__}__{'__'.join([f'{k}={get_hash(str(v)) if hash_use else v}' 
-                      for k, v in sorted(bound_args.arguments.items())
-                      if k not in ignore_keys])}'''
+            key = get_cache_key(func, ignore_keys=ignore_keys, hash_use=hash_use, **kwargs)
+            cache_value = get_cache(key)
 
-            if (res := r.get(key)) is None:
+            if cache_value is None:
                 res = func(**kwargs)
                 r.set(key, pickle.dumps(res), ex=ex)
                 color = Fore.YELLOW
                 log_title = 'save cache'
             else:
-                res = pickle.loads(res)
+                res = pickle.loads(cache_value)
                 color = Fore.GREEN
                 log_title = 'used cache'
 
@@ -58,6 +70,8 @@ def redis_cache(ignore_keys=None, ex=None, hash_use=False):
                     f'''{color}[{log_title}] {f'len={str(len(res)).rjust(3, str(0))}' if type(res) == list else ''} duration={duration} res={Fore.GREEN if bool(res) else ''}{bool(res)}{Fore.RESET} {log_key}''')
             except UnicodeEncodeError:
                 pass
+
             return res
+
         return wrapper
     return decorator
