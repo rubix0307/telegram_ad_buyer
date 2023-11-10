@@ -18,7 +18,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('', views.index),
+    path('', views.index, name='index'),
     path('find_managers/<str:category_name>', views.find_managers, name='find_managers'),
     path('advertising_channels_test/', views.advertising_channels_test, name='advertising_channels_test'),
     path('get_channels/', views.get_channels, name='get_channels'),
