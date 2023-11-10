@@ -1,7 +1,8 @@
+import requests
+import datetime as dt
 from dataclasses import dataclass
 
 from bs4 import BeautifulSoup
-import datetime as dt
 
 from RedisCache.cache import redis_cache
 
@@ -39,9 +40,15 @@ class ScrapPreviewUser:
 
 
 @redis_cache(ignore_keys=['session'], ex=60*60*24*7)
-def get_scrap_card_by_link(*, session, link):
+def get_scrap_card_by_link(*, session, link) -> ScrapPreviewChannel | ScrapPreviewUser | bool:
 
-    response = session.get(link)
+    session = requests.Session()
+    response = session.get(url=link)
+
+    if response.status_code != 200:
+        pass
+
+
     soup = BeautifulSoup(response.text, 'html.parser')
 
     tgme_page = soup.find('div', class_='tgme_page', )
@@ -55,7 +62,7 @@ def get_scrap_card_by_link(*, session, link):
     tgme_page_description = tgme_page.find('div', class_='tgme_page_description')
     description = '\n'.join([str(i) for i in tgme_page_description.contents]) if tgme_page_description else ''
 
-    for stop_word in ['can add', 'group or channel', 'If you have', 'Press the button', 'emoji set']:
+    for stop_word in ['can add', 'group or channel', 'If you have', 'Press the button', 'emoji set', 'group chat']:
         if stop_word.lower() in description.lower():
             return False
 
