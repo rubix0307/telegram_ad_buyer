@@ -1,6 +1,5 @@
 from django import forms
-from django.contrib.auth import get_user_model
-
+from django.contrib.auth import get_user_model, password_validation
 
 CustomUser = get_user_model()
 
@@ -14,10 +13,14 @@ class CustomUserCreationForm(forms.ModelForm):
         fields = ('email', 'first_name', 'last_name', 'password1', 'password2')
 
     def clean_password2(self):
-        password1 = self.cleaned_data.get("password1")
-        password2 = self.cleaned_data.get("password2")
+        password1 = self.cleaned_data.get('password1')
+        password2 = self.cleaned_data.get('password2')
         if password1 and password2 and password1 != password2:
             raise forms.ValidationError("Passwords don't match")
+
+        self.instance.username = self.cleaned_data.get('username')
+        password_validation.validate_password(self.cleaned_data.get('password2'), self.instance)
+
         return password2
 
     def save(self, commit=True):
