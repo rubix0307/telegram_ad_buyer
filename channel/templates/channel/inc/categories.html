@@ -3,7 +3,8 @@
   display: flex;
   flex-wrap: wrap;
   overflow: hidden;
-  max-height: 22px;
+  max-height: 24px;
+  transition: max-height 1s ease-in-out;
 }
 
 .category-item {
@@ -20,7 +21,12 @@
 }
 
 #showMore:checked ~ .categories {
-  max-height: none;
+  max-height: 500px;
+}
+@media (max-width: 730px){
+    #showMore:checked ~ .categories {
+      max-height: 1200px;
+    }
 }
 
 #showMore:checked ~ #showLabel {
@@ -40,11 +46,11 @@
 
 <ul class="categories">
     {% for category in categories %}
-        <li class="category-item"><a href="{% url 'find_managers' category=category.title %}">{{ category.title }}</a></li>
+        <li class="category-item"><a href="{% url 'find_managers' category_name=category.title %}">{{ category.title }}</a></li>
     {% endfor %}
 </ul>
 <div class="categories-btn">
-    <label id="showLabel" for="showMore">Скрыть / показать</label>
+    <label id="showLabel" for="showMore">показать / скрыть </label>
 </div>
 
 
