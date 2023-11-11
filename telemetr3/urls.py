@@ -21,6 +21,8 @@ from user import views as user_views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('channel.urls')),
+
+    path('profile/', include('user.urls')),
     path('register/', user_views.register_view, name='register'),
     path('login/', user_views.login_view, name='login'),
     path('logout/', user_views.logout_view, name='logout'),

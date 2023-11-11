@@ -1,6 +1,6 @@
 <header>
 
-    <div class="left no-select">
+    <a class="left no-select" href="{% url 'index' %}">
 {#        <div class="logo">#}
 {#            <img src="https://telegram.org/img/favicon.ico" alt="">#}
 {#        </div>#}
@@ -12,13 +12,13 @@
             <div class="beta">beta</div>
         </div>
 
-    </div>
+    </a>
 
     <div class="right">
         <ul class="nav no-select">
             {#<li><a href="">Главная</a></li>#}
         </ul>
 
-{#        <a href="" class="account-btn no-select">Аккаунт</a>#}
+        <a href="{% url 'profile' %}" class="account-btn no-select">Аккаунт</a>
     </div>
 </header>

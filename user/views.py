@@ -48,6 +48,6 @@ def logout_view(request):
     return redirect('login')
 
 
-
-
 @login_required
+def profile(request):
+    return render(request, 'user/profile.html')
