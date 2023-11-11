@@ -145,3 +145,4 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, "telemetr3/static/css/192.168.1.131%3
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'user.CustomUser'
+LOGIN_URL = 'login'

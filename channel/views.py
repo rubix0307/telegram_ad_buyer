@@ -1,3 +1,4 @@
+from django.contrib.auth.decorators import login_required
 from django.core.handlers.wsgi import WSGIRequest
 from django.shortcuts import render
 from django.core.paginator import Paginator
@@ -18,17 +19,7 @@ def index(request: WSGIRequest):
     return render(request, 'index.html')
 
 
-def advertising_channels_test(request: WSGIRequest):
-
-    sellers = Channel.objects.filter(categories__title__in=['Авто и мото', 'Для мужчин', 'Женские', 'Здоровье',
-                                                            'Знакомства', 'Криптовалюты', 'Кулинария', 'Лайфхаки',
-                                                            'Познавательные', 'Психология', 'Рукоделие', 'Юриспруденция'
-                                                            ]).all()
-    for seller in sellers:
-        process_advertising_channels(session=next(sessions), seller=seller)
-    pass
-
-
+@login_required
 def find_managers(request: WSGIRequest, category_name):
     category = Category.objects.filter(title=category_name).first()
     channels = Channel.objects.filter(categories__in=[category])
@@ -55,6 +46,17 @@ def find_managers(request: WSGIRequest, category_name):
     context.update({'form': form})
 
     return render(request, 'channel/find_managers.html', context=context)
+
+
+def advertising_channels_test(request: WSGIRequest):
+
+    sellers = Channel.objects.filter(categories__title__in=['Авто и мото', 'Для мужчин', 'Женские', 'Здоровье',
+                                                            'Знакомства', 'Криптовалюты', 'Кулинария', 'Лайфхаки',
+                                                            'Познавательные', 'Психология', 'Рукоделие', 'Юриспруденция'
+                                                            ]).all()
+    for seller in sellers:
+        process_advertising_channels(session=next(sessions), seller=seller)
+    pass
 
 
 def get_channels(request: WSGIRequest):
