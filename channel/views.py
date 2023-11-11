@@ -15,11 +15,7 @@ from .common import process_advertising_channels
 
 
 def index(request: WSGIRequest):
-    context = {
-        'categories': Category.objects.all(),
-    }
-
-    return render(request, 'index.html', context=context)
+    return render(request, 'index.html')
 
 
 def advertising_channels_test(request: WSGIRequest):
@@ -34,14 +30,12 @@ def advertising_channels_test(request: WSGIRequest):
 
 
 def find_managers(request: WSGIRequest, category_name):
-    categories = Category.objects.all()
-    category = categories.filter(title=category_name).first()
+    category = Category.objects.filter(title=category_name).first()
     channels = Channel.objects.filter(categories__in=[category])
 
     context = {
         'channels': channels,
         'category': category,
-        'categories': categories,
     }
 
     if request.method == 'POST':
