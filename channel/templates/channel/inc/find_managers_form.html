@@ -27,6 +27,22 @@
         {{ form.er__lte }}
     </div>
 
+    <div class="caption">Купили рекламу дней назад</div>
+    <div class="form-row">
+        <label for="{{ form.ads_period_min.id_for_label }}">От</label>
+        {{ form.ads_period_min }}
+
+        <label for="{{ form.ads_period_max.id_for_label }}">До</label>
+        {{ form.ads_period_max }}
+    </div>
+
+
+    <div class="caption">Количество менеджеров</div>
+    <div class="form-row">
+        <label for="{{ form.limit.id_for_label }}">🧑</label>
+        {{ form.limit }}
+    </div>
+
     <div class="caption">Язык канала</div>
     <div class="form-row">
         <label for="{{ form.lang_code.id_for_label }}"><img src="https://ssl.gstatic.com/translate/favicon.ico" alt="" class="lang"></label>

@@ -1,17 +1,19 @@
+from datetime import timedelta
+
+from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.core.handlers.wsgi import WSGIRequest
 from django.shortcuts import render
-from django.core.paginator import Paginator
-from django.views.decorators.cache import cache_page
+from django.contrib import messages
 
 from common import get_user_links_by_text
 from test_main import get_channels_by_category, session
-from scraper.telegram import get_scrap_card_by_link, ScrapPreviewUser
 from task.managers import set_managers_by_channels_with_threads
-from .forms import ChannelForm
-from .models import Category, Channel, Manager, Advertisement
+from scraper.telegram import get_scrap_card_by_link, ScrapPreviewUser
 from scraper.telemetr import get_all_categories
 from sessions.main import sessions
+from .forms import ChannelForm
+from .models import Category, Channel, Manager, Advertisement
 from .common import process_advertising_channels
 
 
@@ -29,19 +31,40 @@ def find_managers(request: WSGIRequest, category_name):
         'category': category,
     }
 
+    now = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    last_payment = request.user.payments.filter(date__gte=now - timedelta(days=31)).order_by('-date').first()
+    subscription = last_payment.subscription if last_payment else None
+
     if request.method == 'POST':
-        form = ChannelForm(request.POST)
-        if form.is_valid():
-            channel_filter = {change: form.cleaned_data[change] for change in form.changed_data}
-            channels = channels.filter(**channel_filter)
 
-            ads = Advertisement.objects.filter(seller__in=channels)
-            buyers = Channel.objects.filter(buyer__in=ads)
-            managers = Manager.objects.filter(channel__in=buyers).distinct()
+        form = ChannelForm(request.POST, subscription=subscription)
+        if subscription:
+            if form.is_valid():
 
-            context.update({'managers': managers})
+                channel_filter = {
+                    change: form.cleaned_data[change]
+                    for change in form.changed_data
+                    if change in form.channel_filter_keys
+                }
+                channels = channels.filter(**channel_filter)
+
+                ads = Advertisement.objects.filter(
+                    seller__in=channels,
+                    date__lte=now - timedelta(days=form.cleaned_data['ads_period_min']),
+                    date__gte=now - timedelta(days=form.cleaned_data['ads_period_max']+1),
+                ).order_by('-date')
+                buyers = Channel.objects.filter(buyer__in=ads)
+                managers = Manager.objects.filter(channel__in=buyers).distinct()
+
+                context.update({'managers': managers})
+                form = ChannelForm(initial=form.cleaned_data, subscription=subscription)
+            else:
+                messages.error(request, 'Получены некорректные данные.')
+        else:
+            messages.error(request, 'Для получения менеджеров, необходимо оплатить подписку.')
+
     else:
-        form = ChannelForm()
+        form = ChannelForm(subscription=subscription)
 
     context.update({'form': form})
 

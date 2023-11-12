@@ -61,7 +61,7 @@ def all_sessions(*, cookies_path):
             new_session.cookies.set(cookie['name'], cookie['value'])
 
         new_session.headers.update(headers)
-        new_session.proxies.update({'http': next(proxies)})
+        # new_session.proxies.update({'http': next(proxies)})
         sessions_list.append(new_session)
 
     random.shuffle(sessions_list)
