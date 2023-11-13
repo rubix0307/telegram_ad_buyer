@@ -13,7 +13,7 @@ from scraper.telegram import get_scrap_card_by_link, ScrapPreviewUser
 from scraper.telemetr import get_all_categories
 from sessions.main import sessions
 from .forms import ChannelForm
-from .models import Category, Channel, Manager, Advertisement
+from .models import Category, Channel, Manager, Advertisement, UserManagerHistory
 from .common import process_advertising_channels
 
 
@@ -35,12 +35,17 @@ def find_managers(request: WSGIRequest, category_name):
     last_payment = request.user.payments.filter(date__gte=now - timedelta(days=31)).order_by('-date').first()
     subscription = last_payment.subscription if last_payment else None
 
+    manager_history = UserManagerHistory.objects.filter(user=request.user, date__gte=now)
+    manager_history_count = manager_history.count()
+    manager_limit = (subscription.managers_per_day if subscription else manager_history_count) - manager_history_count
+
     if request.method == 'POST':
 
-        form = ChannelForm(request.POST, subscription=subscription)
+        form = ChannelForm(request.POST, subscription=subscription, manager_limit=manager_limit)
         if subscription:
             if form.is_valid():
 
+                # find managers
                 channel_filter = {
                     change: form.cleaned_data[change]
                     for change in form.changed_data
@@ -56,15 +61,42 @@ def find_managers(request: WSGIRequest, category_name):
                 buyers = Channel.objects.filter(buyer__in=ads)
                 managers = Manager.objects.filter(channel__in=buyers).distinct()
 
+                # exclude managers in history
+                recent_managers = UserManagerHistory.objects.filter(
+                    user=request.user,
+                    manager__in=managers,
+                    date__gte=now - timedelta(days=20),
+                ).values('manager')
+
+                managers = managers.exclude(pk__in=recent_managers)
+                managers = managers[:form.cleaned_data['limit']]
+
+                # set limit
+                new_manager_limit = manager_limit - managers.count()
+                if form.cleaned_data['limit'] > new_manager_limit:
+                    form.cleaned_data.update({'limit': new_manager_limit})
+
+                # write managers history
+                new_histories = [
+                    UserManagerHistory(user=request.user, manager=manager, category=category)
+                    for manager in managers
+                ]
+                UserManagerHistory.objects.bulk_create(new_histories)
+
+                form = ChannelForm(
+                    initial=form.cleaned_data,
+                    subscription=subscription,
+                    manager_limit=new_manager_limit,
+                )
                 context.update({'managers': managers})
-                form = ChannelForm(initial=form.cleaned_data, subscription=subscription)
+
             else:
                 messages.error(request, 'Получены некорректные данные.')
         else:
             messages.error(request, 'Для получения менеджеров, необходимо оплатить подписку.')
 
     else:
-        form = ChannelForm(subscription=subscription)
+        form = ChannelForm(subscription=subscription, manager_limit=manager_limit)
 
     context.update({'form': form})
 

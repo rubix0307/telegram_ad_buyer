@@ -5,11 +5,16 @@ class ChannelForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         self.subscription = kwargs.pop('subscription', None)
+        self.manager_limit = kwargs.pop('manager_limit', None)
         super(ChannelForm, self).__init__(*args, **kwargs)
 
         self.fields['ads_period_min'].widget.attrs['placeholder'] = str(self.subscription.ads_period_min) if self.subscription else '-'
+
         self.fields['ads_period_max'].widget.attrs['placeholder'] = str(self.subscription.ads_period_max) if self.subscription else '-'
-        self.fields['limit'].widget.attrs['placeholder'] = 'Лимит'
+        self.fields['ads_period_max'].widget.attrs['max'] = self.subscription.ads_period_max if self.subscription else 0
+
+        self.fields['limit'].widget.attrs['placeholder'] = str(self.manager_limit) or '-'
+        self.fields['limit'].widget.attrs['max'] = self.manager_limit or 0
 
         self.channel_filter_keys = [
             'participants__gte',
@@ -34,7 +39,6 @@ class ChannelForm(forms.Form):
     limit = forms.IntegerField(label='Лимит', min_value=0, required=True)
 
     lang_code = forms.ChoiceField(label='Язык канала', choices=[('', 'Любой'), ('ru', 'Русский'), ('ua', 'Украинский')], required=False)
-
 
     def clean_ads_period_min(self):
 
@@ -65,3 +69,14 @@ class ChannelForm(forms.Form):
             ads_period_max = self.subscription.ads_period_min
 
         return ads_period_max
+
+    def clean_limit(self):
+        limit = self.cleaned_data.get('limit')
+
+        if not limit:
+            limit = 0
+
+        elif limit > self.manager_limit:
+            limit = self.manager_limit
+
+        return limit
