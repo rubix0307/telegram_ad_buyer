@@ -19,6 +19,10 @@
             {#<li><a href="">Главная</a></li>#}
         </ul>
 
-        <a href="{% url 'profile' %}" class="account-btn no-select">Аккаунт</a>
+        {% if request.user.email %}
+            <a href="{% url 'profile' %}" class="account-btn no-select">Аккаунт</a>
+        {% else %}
+            <a href="{% url 'login' %}" class="account-btn no-select">Войти</a>
+        {% endif %}
     </div>
 </header>
