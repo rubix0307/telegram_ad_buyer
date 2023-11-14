@@ -6,19 +6,40 @@ from django.core.handlers.wsgi import WSGIRequest
 from django.shortcuts import render
 from django.contrib import messages
 
-from common import get_user_links_by_text
+from common import get_user_links_by_text, clear_text
 from test_main import get_channels_by_category, session
 from task.managers import set_managers_by_channels_with_threads
 from scraper.telegram import get_scrap_card_by_link, ScrapPreviewUser
 from scraper.telemetr import get_all_categories
 from sessions.main import sessions
-from .forms import ChannelForm
-from .models import Category, Channel, Manager, Advertisement, UserManagerHistory
+from .forms import ChannelForm, BuyerForm
+from .models import Category, Channel, Manager, Advertisement, UserManagerHistory, UserBuyerHistory
 from .common import process_advertising_channels
+from user.models import Subscription
 
 
 def index(request: WSGIRequest):
-    return render(request, 'index.html')
+    context = {
+        'subscriptions': Subscription.objects.filter(is_active=True).order_by('price').all()
+    }
+    return render(request, 'channel/index.html', context=context)
+
+
+def managers_history(request: WSGIRequest, category_id: int, only_managers_history=False):
+    category = Category.objects.filter(id=category_id).first()
+
+    today = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    history = Manager.objects.filter(
+            usermanagerhistory__user=request.user,
+            usermanagerhistory__category=category,
+            usermanagerhistory__date__gte=today,
+        ).distinct()
+
+    if not only_managers_history:
+        if request.method == 'POST':
+            context = {'managers_history': history}
+            return render(request, 'channel/inc/find_managers_history_list.html', context=context)
+    return history
 
 
 @login_required
@@ -29,6 +50,7 @@ def find_managers(request: WSGIRequest, category_name):
     context = {
         'channels': channels,
         'category': category,
+        'form_buyer': BuyerForm(),
     }
 
     now = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -94,104 +116,38 @@ def find_managers(request: WSGIRequest, category_name):
                 messages.error(request, 'Получены некорректные данные.')
         else:
             messages.error(request, 'Для получения менеджеров, необходимо оплатить подписку.')
-
     else:
         form = ChannelForm(subscription=subscription, manager_limit=manager_limit)
 
-    context.update({'form': form})
+    context.update({
+        'form': form,
+        'managers_history': managers_history(request, category.id, only_managers_history=True),
+    })
 
     return render(request, 'channel/find_managers.html', context=context)
 
 
-def advertising_channels_test(request: WSGIRequest):
-
-    sellers = Channel.objects.filter(categories__title__in=['Авто и мото', 'Для мужчин', 'Женские', 'Здоровье',
-                                                            'Знакомства', 'Криптовалюты', 'Кулинария', 'Лайфхаки',
-                                                            'Познавательные', 'Психология', 'Рукоделие', 'Юриспруденция'
-                                                            ]).all()
-    for seller in sellers:
-        process_advertising_channels(session=next(sessions), seller=seller)
-    pass
-
-
-def get_channels(request: WSGIRequest):
+def buyers_history(request: WSGIRequest):
     if request.method == 'POST':
-        channel_name = request.POST.get('channel_name')
-        channels = Channel.objects.filter(title__icontains=channel_name).all()[:10]
-        return render(request, 'channel/inc/channels_card.html', context={'channels': channels})
+        form = BuyerForm(request.POST)
 
+        context = {
+            'form_buyer': form,
+        }
+        if form.is_valid():
+            text = form.cleaned_data.get('text', '')
+            usernames = ['@' + clear_text(username) for username in text.split('@') if username]
 
-def set_managers(request: WSGIRequest):
-    categories = Category.objects.all()
-    channels = Channel.objects.filter(categories__in=categories).all()
+            managers = Manager.objects.filter(username__in=usernames)
 
-    ads = Advertisement.objects.filter(seller__in=channels)
-    buyers = Channel.objects.filter(buyer__in=ads, description__isnull=True).distinct()
+            # TODO
+            residue = None
 
-    set_managers_by_channels_with_threads(buyers, threads_num=30)
+            new_histories = [UserBuyerHistory(user=request.user, manager=manager) for manager in managers]
+            UserBuyerHistory.objects.bulk_create(new_histories)
 
-    return 'set_managers end'
-
-def set_data_in_db(request: WSGIRequest):
-    categories = get_all_categories(session=session)
-    all_channels_id = [channel.id for channel in Channel.objects.all()]
-    for lang_code in ['ru', 'ua']:
-        for category in categories:
-
-            channels = get_channels_by_category(session=session, category_url=category.link_telemetr, lang_code=lang_code)
-            for channel in channels:
-
-                if channel.id in all_channels_id:
-                    continue
-                all_channels_id.append(channel.id)
-
-                new_channel = Channel(
-                    id=channel.id,
-                    title=channel.title,
-                    link_avatar=channel.link_avatar,
-                    link_tg=channel.link_tg,
-                    link_telemetr=channel.link_telemetr,
-                    description=channel.description,
-                    participants=channel.participants,
-                    views=channel.views,
-                    views24=channel.views24,
-                    er=channel.er,
-                    er24=channel.er24,
-                    lang_code=lang_code,
-                )
-                new_channel.save()
-
-                for channel_category in channel.categories:
-                    category_in_db = Category.objects.filter(title__startswith=channel_category).first()
-                    if category_in_db:
-                        new_channel.categories.add(category_in_db)
-
-                managers = get_user_links_by_text(text=new_channel.description)
-                for manager_link in managers:
-                    try:
-                        manager = Manager.objects.filter(link_tg=manager_link).first()
-
-                        if not manager:
-                            manager_scrap_card = get_scrap_card_by_link(session=session, link=manager_link)
-                            if isinstance(manager_scrap_card, ScrapPreviewUser):
-                                try:
-                                    manager = Manager(
-                                        name=manager_scrap_card.name,
-                                        username=manager_scrap_card.username,
-                                        description=manager_scrap_card.description,
-                                        link_avatar=manager_scrap_card.link_avatar,
-                                        link_tg=manager_scrap_card.link_tg,
-                                    )
-                                    manager.save()
-                                except AttributeError as ex:
-                                    continue
-                        new_channel.managers.add(manager)
-                    except Exception as ex:
-                        pass
-                pass
-
-    return render(request, 'base.html')
-
-
-
-
+            context.update({
+                'form_buyer': BuyerForm(),
+                'form_buyer_text': f'Успешно записано {len(new_histories)} менеджеров',
+            })
+        return render(request, 'channel/inc/find_managers_buyer_form.html', context=context)

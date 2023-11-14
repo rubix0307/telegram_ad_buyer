@@ -1,0 +1,8 @@
+<div id="find_managers">
+    <div>Найдено менеджеров: {{ managers|length }}</div>
+    <ol class="manager-list">
+        {% for manager in managers %}
+            <li><a class="no-select" href="tg://resolve?domain={{ manager.username|cut:"@" }}"><img src="https://telegram.org/img/favicon-16x16.png" alt=""></a>{{ manager.username }}</li>
+        {% endfor %}
+    </ol>
+</div>

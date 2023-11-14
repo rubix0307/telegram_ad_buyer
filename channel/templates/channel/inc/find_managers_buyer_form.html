@@ -1,0 +1,18 @@
+<form
+    action="{% url 'buyers_history' %}"
+    class="buyers-history"
+    method="post"
+    hx-post="{% url 'buyers_history' %}"
+    hx-target="this"
+    hx-swap="outerHTML"
+>
+    {% if form_buyer_text %}
+        <div class="text">{{ form_buyer_text }}</div>
+    {% endif %}
+
+    <div class="text">Запиши менеджеров, которые купили рекламу. Они будут во вкладке TODO. Через месяц, мы напомним о них</div>
+
+    {% csrf_token %}
+    {{ form_buyer.text }}
+    <button type="submit">Записать</button>
+</form>

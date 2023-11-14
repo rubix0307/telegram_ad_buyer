@@ -95,3 +95,21 @@ class UserManagerHistory(models.Model):
     class Meta:
         db_table = 'user_manager_history'
         ordering = ['user', 'category', 'date']
+
+
+class UserBuyerHistory(models.Model):
+
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    manager = models.ForeignKey(Manager, on_delete=models.CASCADE)
+    date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'<{self.__class__.__name__}>: {self.user.email}-{self.manager.username}'
+
+    def __repr__(self):
+        return self.__str__()
+
+    class Meta:
+        db_table = 'user_buyer_history'
+
+

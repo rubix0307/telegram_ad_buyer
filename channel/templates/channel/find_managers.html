@@ -6,15 +6,17 @@
     <div class="caption" style="text-align: center; margin-bottom: 15px;">
         <div style="font-size: 26px; font-weight: bold; margin-top: 20px;">{{ category.title }}</div>
         <div>Найдено каналов: {{ channels|length }}</div>
+        {% include 'channel/inc/find_managers_form.html' %}
     </div>
 
-    {% include 'channel/inc/find_managers_form.html' %}
 
-    <div>Найдено менеджеров: {{ managers|length }}</div>
-    <ol class="manager-list">
-        {% for manager in managers %}
-        	<li><a href="tg://resolve?domain={{ manager.username|cut:"@" }}"><img src="https://telegram.org/img/favicon-16x16.png" alt=""></a>{{ manager.username }}</li>
-        {% endfor %}
-    </ol>
+    <div class="find_managers_feed">
+
+        {% include 'channel/inc/find_managers_history_list.html' %}
+        {% include 'channel/inc/find_managers_list.html' %}
+        {% include 'channel/inc/find_managers_buyer_form.html' %}
+
+    </div>
+
 
 {% endblock %}

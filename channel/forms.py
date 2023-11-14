@@ -80,3 +80,8 @@ class ChannelForm(forms.Form):
             limit = self.manager_limit
 
         return limit
+
+
+class BuyerForm(forms.Form):
+
+    text = forms.CharField(widget=forms.Textarea(attrs={'placeholder': f'@username\n'*3 + '...'}),)
