@@ -1,4 +1,8 @@
-<form action="" class="find-manager" method="post">
+<form
+    class="find-manager"
+    action="{% url 'find_managers' category_name=category.title %}"
+    method="post"
+>
     {% csrf_token %}
     <div class="caption">Подписчиков</div>
     <div class="form-row">
