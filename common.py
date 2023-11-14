@@ -1,5 +1,11 @@
+import re
+
 from bs4 import BeautifulSoup
 from RedisCache.cache import redis_cache
+
+
+def clear_text(text):
+    return re.sub(r'[\n\t\']', '', text).strip()
 
 
 @redis_cache(hash_use=True, ex=60*60*24*7)

@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup
 import datetime as dt
 
 from RedisCache.cache import redis_cache
+from common import clear_text
 
 
 @dataclass
@@ -66,10 +67,6 @@ class ScrapCategories:
 
     def __repr__(self):
         return self.__str__()
-
-
-def clear_text(text):
-    return re.sub(r'[\n\t\']', '', text).strip()
 
 
 @redis_cache(ignore_keys=['session'])
