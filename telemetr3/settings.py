@@ -137,8 +137,8 @@ USE_TZ = True
 
 STATIC_URL = 'static6/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-# STATICFILES_DIRS = [os.path.join(BASE_DIR, "telemetr3/static"),]
-STATICFILES_DIRS = [os.path.join(BASE_DIR, "telemetr3/static/css/192.168.1.131%3A8000/static"),]  # development-only
+STATICFILES_DIRS = [os.path.join(BASE_DIR, "telemetr3/static"),]
+# STATICFILES_DIRS = [os.path.join(BASE_DIR, "telemetr3/static/css/192.168.1.131%3A8000/static"),]  # development-only
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
