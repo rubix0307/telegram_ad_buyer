@@ -1,1 +1,45 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block main %}
+    <div class="index-page">
+        <div class="welcome no-select">
+            <div class="title">Откройте для себя мир целевой рекламы в Телеграм</div>
+            <img src="{% static 'imgs/index-duck.png' %}" alt="">
+        </div>
+
+        <div class="possibilities no-select">
+            <div class="title">Найдите администраторов телеграм каналов, готовых к новым рекламным сотрудничествам!</div>
+            <div>На нашем сервисе вы сможете:</div>
+            <ul>
+                <li><b>Фильтровать каналы по категориям и интересам</b>: от GIF и видео до юриспруденции — выберите категорию, которая соответствует вашему продукту или услуге.</li>
+                <li><b>Определять аудиторию по количеству подписчиков</b>: установите желаемый диапазон подписчиков, чтобы найти каналы именно с вашей целевой аудиторией.</li>
+                <li><b>Оценивать эффективность каналов по вовлеченности</b>: выбирайте каналы с высокой активностью подписчиков для получения лучшего отклика на вашу рекламу.</li>
+                <li><b>Узнавать, кто недавно инвестировал в рекламу</b>: поиск по дате последней покупки рекламы поможет выявить активно продвигающиеся каналы.</li>
+                <li><b>Сортировать каналы по языку</b>: найдите каналы, общающиеся на нужном вам языке, и достигайте нужной локальной аудитории.</li>
+            </ul>
+        </div>
+
+        <div class="right-now no-select">
+            <div class="title">Начните улучшать ваш маркетинг в Телеграм прямо сейчас!</div>
+            {% include 'channel/inc/categories.html' %}
+        </div>
+
+        <div class="subscriptions">
+            {% for subscription in subscriptions %}
+            	<div class="subscription">
+                    <div class="title">{{ subscription.title }}</div>
+                    <div class="periods">
+                        <div class="title">История покупки рекламы (дней):</div>
+                        <div class="min">Мин: {{ subscription.ads_period_min }}</div>
+                        <div class="max">Макс: {{ subscription.ads_period_max }}</div>
+                    </div>
+                    <div class="managers_per_day">Поиск админов в день: {{ subscription.managers_per_day }}</div>
+                    <div class="price">Цена: ${{ subscription.price }}</div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+
+{% endblock %}
