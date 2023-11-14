@@ -20,7 +20,6 @@ from . import views
 urlpatterns = [
     path('', views.index, name='index'),
     path('find_managers/<str:category_name>', views.find_managers, name='find_managers'),
-    path('advertising_channels_test/', views.advertising_channels_test, name='advertising_channels_test'),
-    path('get_channels/', views.get_channels, name='get_channels'),
-    path('set_managers/', views.set_managers, name='set_managers'),
+    path('buyers_history/', views.buyers_history, name='buyers_history'),
+    path('managers_history/<int:category_id>', views.managers_history, name='managers_history'),
 ]
